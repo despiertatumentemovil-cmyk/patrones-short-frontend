@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import {
   BarChart,
@@ -13,7 +13,6 @@ import {
   Cell,
 } from "recharts";
 import { createChart, ColorType } from "lightweight-charts";
-import { useRef } from "react";
 
 const API_URL = "https://patrones-short-backend-production.up.railway.app";
 
@@ -191,81 +190,4 @@ export default function Home() {
       )}
 
       {vista === "grafico" && casoSeleccionado && (
-        <GraficoVelas
-          caso={casoSeleccionado}
-          onVolver={() => setVista("casos")}
-        />
-      )}
-    </main>
-  );
-}
-
-function GraficoVelas({ caso, onVolver }: { caso: Caso; onVolver: () => void }) {
-  const chartRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    axios
-      .get(`${API_URL}/api/velas/${caso.symbol}/${caso.fecha}`)
-      .then((res) => {
-        const velas: Vela[] = res.data;
-        if (!chartRef.current) return;
-
-        chartRef.current.innerHTML = "";
-
-        const chart = createChart(chartRef.current, {
-          width: chartRef.current.clientWidth,
-          height: 500,
-          layout: {
-            background: { type: ColorType.Solid, color: "#18181b" },
-            textColor: "#d4d4d8",
-          },
-          grid: {
-            vertLines: { color: "#27272a" },
-            horzLines: { color: "#27272a" },
-          },
-        });
-
-        const candleSeries = (chart as any).addCandlestickSeries({
-          upColor: "#22c55e",
-          downColor: "#ef4444",
-          borderVisible: false,
-          wickUpColor: "#22c55e",
-          wickDownColor: "#ef4444",
-        });
-
-        const datosFormateados = velas.map((v) => ({
-          time: (new Date(v.timestamp).getTime() / 1000) as any,
-          open: v.open,
-          high: v.high,
-          low: v.low,
-          close: v.close,
-        }));
-
-        candleSeries.setData(datosFormateados);
-        chart.timeScale().fitContent();
-      })
-      .catch(() => {
-        if (chartRef.current) {
-          chartRef.current.innerHTML =
-            '<p class="text-red-400">No se pudo cargar el grafico de este caso.</p>';
-        }
-      });
-  }, [caso]);
-
-  return (
-    <>
-      <button onClick={onVolver} className="mb-4 text-zinc-400 hover:text-white">
-        ← Volver a casos
-      </button>
-      <h1 className="text-2xl font-bold mb-2">
-        {caso.symbol} — {caso.fecha}
-      </h1>
-      <p className="text-zinc-400 mb-6">
-        Resultado tras la señal: <span className="text-red-400">{caso.cambio_futuro_pct}%</span>
-      </p>
-      <div className="bg-zinc-900 rounded-xl p-4">
-        <div ref={chartRef} />
-      </div>
-    </>
-  );
-}
+        <GraficoVelas caso={casoSeleccionado} onVolver={() => setVista("casos")} />
