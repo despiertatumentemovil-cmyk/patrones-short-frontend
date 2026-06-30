@@ -12,7 +12,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { createChart, ColorType } from "lightweight-charts";
+import { createChart, ColorType, CandlestickSeries } from "lightweight-charts";
 
 const API_URL = "https://patrones-short-backend-production.up.railway.app";
 
@@ -47,8 +47,11 @@ interface Vela {
 
 function GraficoVelas({ caso, onVolver }: { caso: Caso; onVolver: () => void }) {
   const chartRef = useRef<HTMLDivElement>(null);
+  const [errorCarga, setErrorCarga] = useState(false);
 
   useEffect(() => {
+    setErrorCarga(false);
+
     axios
       .get(`${API_URL}/api/velas/${caso.symbol}/${caso.fecha}`)
       .then((res) => {
@@ -70,7 +73,7 @@ function GraficoVelas({ caso, onVolver }: { caso: Caso; onVolver: () => void }) 
           },
         });
 
-        const candleSeries = (chart as any).addCandlestickSeries({
+        const candleSeries = chart.addSeries(CandlestickSeries, {
           upColor: "#22c55e",
           downColor: "#ef4444",
           borderVisible: false,
@@ -90,10 +93,7 @@ function GraficoVelas({ caso, onVolver }: { caso: Caso; onVolver: () => void }) 
         chart.timeScale().fitContent();
       })
       .catch(() => {
-        if (chartRef.current) {
-          chartRef.current.innerHTML =
-            '<p class="text-red-400">No se pudo cargar el grafico de este caso.</p>';
-        }
+        setErrorCarga(true);
       });
   }, [caso]);
 
@@ -108,9 +108,18 @@ function GraficoVelas({ caso, onVolver }: { caso: Caso; onVolver: () => void }) 
       <p className="text-zinc-400 mb-6">
         Resultado tras la señal: <span className="text-red-400">{caso.cambio_futuro_pct}%</span>
       </p>
-      <div className="bg-zinc-900 rounded-xl p-4">
-        <div ref={chartRef}></div>
-      </div>
+      {errorCarga ? (
+        <div className="bg-zinc-900 rounded-xl p-6">
+          <p className="text-yellow-400">
+            No hay datos de velas guardados para este caso concreto (el feed gratuito no cubrió
+            este ticker en este momento). Prueba con otro caso de la lista.
+          </p>
+        </div>
+      ) : (
+        <div className="bg-zinc-900 rounded-xl p-4">
+          <div ref={chartRef}></div>
+        </div>
+      )}
     </div>
   );
 }
